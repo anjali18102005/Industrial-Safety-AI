@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Industrial Safety Intelligence System"
+version = "1.0.0"
+id = "artifacts/safety-intelligence"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22357
+
+[services.development]
+run = "pnpm --filter @workspace/safety-intelligence run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/safety-intelligence", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/safety-intelligence/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22357"
+BASE_PATH = "/"

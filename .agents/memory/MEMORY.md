@@ -1,0 +1,1 @@
+- [Empty-string filter params vs Zod enums](openapi-empty-filter-enum.md) — a `useState('')` default for an optional enum query filter fails Zod validation (400); only send the param when truthy.

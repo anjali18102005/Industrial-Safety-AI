@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Industrial Safety Intelligence System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Plant-wide summary and status
+  - name: zones
+    description: Plant zones
+  - name: sensors
+    description: Sensor readings
+  - name: hazards
+    description: Hazard scenarios detected by the AI
+  - name: activity
+    description: Safety timeline and digital safety log
 paths:
   /healthz:
     get:
@@ -24,6 +34,218 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Plant-wide safety summary
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /zones:
+    get:
+      operationId: listZones
+      tags: [zones]
+      summary: List plant zones with current risk state
+      responses:
+        "200":
+          description: List of zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Zone"
+
+  /sensors:
+    get:
+      operationId: listSensors
+      tags: [sensors]
+      summary: List sensors with their latest reading
+      parameters:
+        - name: zoneId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sensorType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SensorType"
+      responses:
+        "200":
+          description: List of sensors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sensor"
+
+  /sensors/{id}/history:
+    get:
+      operationId: getSensorHistory
+      tags: [sensors]
+      summary: Historical readings for a sensor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: History of readings, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SensorReading"
+        "404":
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hazards:
+    get:
+      operationId: listHazards
+      tags: [hazards]
+      summary: List detected hazard scenarios, prioritized
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/HazardStatus"
+        - name: riskLevel
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/RiskLevel"
+      responses:
+        "200":
+          description: List of hazard scenarios ordered by priority score descending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HazardSummary"
+
+  /hazards/{id}:
+    get:
+      operationId: getHazard
+      tags: [hazards]
+      summary: Get full hazard scenario detail with explainability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Hazard detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HazardDetail"
+        "404":
+          description: Hazard not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hazards/{id}/status:
+    patch:
+      operationId: updateHazardStatus
+      tags: [hazards]
+      summary: Acknowledge, escalate, or resolve a hazard scenario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HazardStatusUpdate"
+      responses:
+        "200":
+          description: Updated hazard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HazardDetail"
+        "404":
+          description: Hazard not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hazards/{id}/timeline:
+    get:
+      operationId: getHazardTimeline
+      tags: [hazards]
+      summary: Safety timeline for a single hazard scenario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Timeline events, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineEvent"
+        "404":
+          description: Hazard not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: Recent activity feed across the whole plant (digital safety log)
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent timeline events across all hazards, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineEvent"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +256,253 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    RiskLevel:
+      type: string
+      enum: [low, medium, high, critical]
+
+    HazardStatus:
+      type: string
+      enum: [active, acknowledged, monitoring, resolved]
+
+    SensorType:
+      type: string
+      enum: [gas, vibration, temperature, pressure, proximity, camera]
+
+    SensorStatus:
+      type: string
+      enum: [normal, warning, critical]
+
+    Zone:
+      type: object
+      required: [id, name, riskLevel, activeHazardCount, workersPresent, activeWorkPermits]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        activeHazardCount:
+          type: integer
+        workersPresent:
+          type: integer
+        activeWorkPermits:
+          type: integer
+
+    Sensor:
+      type: object
+      required: [id, name, sensorType, zoneId, zoneName, unit, latestValue, status, updatedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sensorType:
+          $ref: "#/components/schemas/SensorType"
+        zoneId:
+          type: string
+        zoneName:
+          type: string
+        unit:
+          type: string
+        latestValue:
+          type: number
+        status:
+          $ref: "#/components/schemas/SensorStatus"
+        updatedAt:
+          type: string
+          format: date-time
+
+    SensorReading:
+      type: object
+      required: [timestamp, value, status]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        status:
+          $ref: "#/components/schemas/SensorStatus"
+
+    ContributingFactor:
+      type: object
+      required: [id, label, description, weight]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        weight:
+          type: number
+          description: Relative contribution to the overall risk assessment, 0-1
+
+    RecommendedAction:
+      type: object
+      required: [id, action, rationale, priority]
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        rationale:
+          type: string
+        priority:
+          type: string
+          enum: [immediate, high, normal]
+
+    ExplainabilityTrace:
+      type: object
+      required: [contributingSensors, reasoningSteps, riskRationale, priorityRationale, confidenceRationale]
+      properties:
+        contributingSensors:
+          type: array
+          items:
+            type: string
+        reasoningSteps:
+          type: array
+          items:
+            type: string
+        riskRationale:
+          type: string
+        priorityRationale:
+          type: string
+        confidenceRationale:
+          type: string
+
+    HazardSummary:
+      type: object
+      required:
+        - id
+        - title
+        - scenarioType
+        - riskLevel
+        - confidenceScore
+        - priorityScore
+        - status
+        - zoneId
+        - zoneName
+        - detectedAt
+        - workersNearby
+        - activeWorkPermit
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        scenarioType:
+          type: string
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        confidenceScore:
+          type: number
+        priorityScore:
+          type: number
+        status:
+          $ref: "#/components/schemas/HazardStatus"
+        zoneId:
+          type: string
+        zoneName:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+        workersNearby:
+          type: integer
+        activeWorkPermit:
+          type: boolean
+
+    HazardDetail:
+      allOf:
+        - $ref: "#/components/schemas/HazardSummary"
+        - type: object
+          required:
+            - description
+            - contributingFactors
+            - recommendedActions
+            - explainability
+          properties:
+            description:
+              type: string
+            contributingFactors:
+              type: array
+              items:
+                $ref: "#/components/schemas/ContributingFactor"
+            recommendedActions:
+              type: array
+              items:
+                $ref: "#/components/schemas/RecommendedAction"
+            explainability:
+              $ref: "#/components/schemas/ExplainabilityTrace"
+
+    HazardStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/HazardStatus"
+
+    DashboardSummary:
+      type: object
+      required:
+        - activeHazardCount
+        - criticalCount
+        - highCount
+        - mediumCount
+        - lowCount
+        - averageConfidence
+        - zonesMonitored
+        - sensorsOnline
+        - workersOnSite
+        - topHazards
+      properties:
+        activeHazardCount:
+          type: integer
+        criticalCount:
+          type: integer
+        highCount:
+          type: integer
+        mediumCount:
+          type: integer
+        lowCount:
+          type: integer
+        averageConfidence:
+          type: number
+        zonesMonitored:
+          type: integer
+        sensorsOnline:
+          type: integer
+        workersOnSite:
+          type: integer
+        topHazards:
+          type: array
+          items:
+            $ref: "#/components/schemas/HazardSummary"
+
+    TimelineEvent:
+      type: object
+      required: [id, hazardId, hazardTitle, eventType, description, timestamp]
+      properties:
+        id:
+          type: string
+        hazardId:
+          type: string
+        hazardTitle:
+          type: string
+        eventType:
+          type: string
+          enum: [sensor_anomaly, scenario_detected, risk_escalated, priority_changed, recommendation_issued, status_changed]
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
