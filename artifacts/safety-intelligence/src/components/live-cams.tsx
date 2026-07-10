@@ -9,35 +9,50 @@ const riskGlow: Record<string, string> = {
   low: 'ring-1 ring-border',
 };
 
-// Deterministic per-zone gradient "signal" so each tile reads as a distinct feed.
-const patterns = [
-  'from-slate-800 via-slate-900 to-black',
-  'from-zinc-800 via-neutral-900 to-black',
-  'from-stone-800 via-neutral-900 to-black',
-  'from-slate-900 via-zinc-900 to-black',
-  'from-neutral-800 via-slate-900 to-black',
-];
+// Sample looping footage per zone id, generated as placeholder CCTV-style clips.
+const footageByZone: Record<string, string> = {
+  'zone-a': '/cams/zone-a.mp4',
+  'zone-b': '/cams/zone-b.mp4',
+  'zone-c': '/cams/zone-c.mp4',
+  'zone-d': '/cams/zone-d.mp4',
+  'zone-e': '/cams/zone-e.mp4',
+};
 
 function CameraTile({
+  zoneId,
   name,
   riskLevel,
-  index,
   now,
 }: {
+  zoneId: string;
   name: string;
   riskLevel: string;
-  index: number;
   now: Date;
 }) {
-  const pattern = patterns[index % patterns.length];
   const timestamp = now.toLocaleTimeString('en-GB', { hour12: false });
+  const src = footageByZone[zoneId];
 
   return (
     <div
-      className={`relative aspect-video rounded-md overflow-hidden bg-gradient-to-br ${pattern} ${riskGlow[riskLevel] ?? riskGlow.low}`}
+      className={`relative aspect-video rounded-md overflow-hidden bg-black ${riskGlow[riskLevel] ?? riskGlow.low}`}
     >
-      {/* simulated scanline sweep */}
-      <div className="absolute inset-0 opacity-20 [background:repeating-linear-gradient(0deg,rgba(255,255,255,0.08)_0px,rgba(255,255,255,0.08)_1px,transparent_1px,transparent_3px)]" />
+      {src ? (
+        <video
+          className="absolute inset-0 w-full h-full object-cover opacity-90"
+          src={src}
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+          <VideoOff className="w-5 h-5" />
+        </div>
+      )}
+
+      {/* simulated scanline + grain overlay to sell the CCTV look */}
+      <div className="absolute inset-0 opacity-15 [background:repeating-linear-gradient(0deg,rgba(255,255,255,0.08)_0px,rgba(255,255,255,0.08)_1px,transparent_1px,transparent_3px)]" />
       <div className="absolute inset-x-0 h-8 bg-gradient-to-b from-white/10 to-transparent animate-[scan_4s_linear_infinite]" />
 
       <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-black/50 rounded px-1.5 py-0.5">
@@ -82,7 +97,7 @@ export function LiveCams() {
         <span className="text-[10px] font-mono text-muted-foreground">{zones?.length ?? 0} FEEDS</span>
       </div>
 
-      <div className="p-3 space-y-3">
+      <div className="p-3">
         {isLoading && (
           <div className="text-xs font-mono text-muted-foreground p-4 text-center animate-pulse">
             Connecting to feeds...
@@ -94,9 +109,13 @@ export function LiveCams() {
             Feed unavailable
           </div>
         )}
-        {zones?.map((zone, i) => (
-          <CameraTile key={zone.id} name={zone.name} riskLevel={zone.riskLevel} index={i} now={now} />
-        ))}
+        {zones && zones.length > 0 && (
+          <div className="grid grid-cols-3 grid-rows-2 gap-3">
+            {zones.slice(0, 6).map((zone) => (
+              <CameraTile key={zone.id} zoneId={zone.id} name={zone.name} riskLevel={zone.riskLevel} now={now} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

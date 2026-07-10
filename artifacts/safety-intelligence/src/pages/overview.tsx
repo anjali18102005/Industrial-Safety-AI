@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGetDashboardSummary } from '@workspace/api-client-react';
-import { AlertTriangle, Map, Radio, Users, Activity, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Map, Radio, Users, ChevronRight, CheckCircle2, Gauge } from 'lucide-react';
 import { Link } from 'wouter';
 import { RiskBadge, StatusBadge } from '@/components/ui/badge';
 import { LiveCams } from '@/components/live-cams';
@@ -27,24 +27,27 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
         {/* Live Cams — left column */}
-        <div className="lg:col-span-1">
+        <div>
           <LiveCams />
         </div>
 
-        <div className="lg:col-span-3 space-y-6">
+        <div className="space-y-6">
           {/* KPI Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <KpiCard title="Active Hazards" value={summary.activeHazardCount} icon={AlertTriangle} trend={summary.criticalCount > 0 ? 'critical' : 'normal'} />
             <KpiCard title="Zones Monitored" value={summary.zonesMonitored} icon={Map} />
             <KpiCard title="Sensors Online" value={summary.sensorsOnline} icon={Radio} />
             <KpiCard title="Workers On Site" value={summary.workersOnSite} icon={Users} />
           </div>
 
+          {/* AI Risk Score */}
+          <RiskScoreCard summary={summary} />
+
           {/* Risk Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-card border rounded-lg shadow-sm p-6 lg:col-span-1 flex flex-col">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-card border rounded-lg shadow-sm p-6 flex flex-col">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-6">Hazard Distribution</h3>
               <div className="space-y-4 flex-1 justify-center flex flex-col">
                 <DistributionRow label="Critical" count={summary.criticalCount} total={summary.activeHazardCount} color="bg-red-500" />
@@ -59,7 +62,7 @@ export default function Overview() {
             </div>
 
             {/* Top Priority Hazards */}
-            <div className="bg-card border rounded-lg shadow-sm p-0 lg:col-span-2 flex flex-col">
+            <div className="bg-card border rounded-lg shadow-sm p-0 flex flex-col">
               <div className="p-6 border-b flex items-center justify-between">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Priority Action Required</h3>
                 <Link href="/hazards" className="text-xs font-semibold text-primary flex items-center hover:underline">
@@ -123,6 +126,63 @@ function KpiCard({ title, value, icon: Icon, trend }: { title: string, value: nu
       </div>
       <div className="mt-4 flex items-baseline gap-2">
         <span className="text-4xl font-mono font-bold tracking-tight">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+function RiskScoreCard({ summary }: { summary: { criticalCount: number; highCount: number; mediumCount: number; lowCount: number; activeHazardCount: number; averageConfidence: number } }) {
+  const weighted = summary.criticalCount * 4 + summary.highCount * 3 + summary.mediumCount * 2 + summary.lowCount * 1;
+  const maxWeighted = Math.max(summary.activeHazardCount, 1) * 4;
+  const severityScore = summary.activeHazardCount === 0 ? 0 : (weighted / maxWeighted) * 100;
+  const confidence = summary.averageConfidence * 100;
+  // Overall AI risk score blends hazard severity with the model's confidence in its assessments.
+  const riskScore = Math.min(100, Math.max(0, Math.round(severityScore * 0.7 + (severityScore > 0 ? confidence * 0.3 : 0))));
+
+  const band = riskScore >= 75 ? 'critical' : riskScore >= 50 ? 'high' : riskScore >= 25 ? 'medium' : 'low';
+  const bandStyles: Record<string, { ring: string; text: string; label: string }> = {
+    critical: { ring: 'stroke-red-500', text: 'text-red-500', label: 'Critical' },
+    high: { ring: 'stroke-orange-500', text: 'text-orange-500', label: 'Elevated' },
+    medium: { ring: 'stroke-amber-400', text: 'text-amber-500', label: 'Moderate' },
+    low: { ring: 'stroke-emerald-500', text: 'text-emerald-500', label: 'Nominal' },
+  };
+  const style = bandStyles[band];
+
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (riskScore / 100) * circumference;
+
+  return (
+    <div className="bg-card border rounded-lg shadow-sm p-6 flex items-center gap-6">
+      <div className="relative shrink-0 w-24 h-24">
+        <svg viewBox="0 0 100 100" className="w-24 h-24 -rotate-90">
+          <circle cx="50" cy="50" r={radius} className="stroke-muted" strokeWidth="8" fill="none" />
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            className={`${style.ring} transition-all duration-700`}
+            strokeWidth="8"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className={`text-2xl font-mono font-bold ${style.text}`}>{riskScore}</span>
+          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">/ 100</span>
+        </div>
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <Gauge className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">AI Risk Score</h3>
+        </div>
+        <p className={`text-lg font-bold ${style.text}`}>{style.label} Site Risk</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Blends live hazard severity across all zones with the model's average confidence ({confidence.toFixed(1)}%) in its assessments.
+        </p>
       </div>
     </div>
   );
