@@ -7,12 +7,15 @@ import {
   Radio, 
   LayoutDashboard,
   Clock,
-  Menu
+  Menu,
+  LogOut
 } from 'lucide-react';
 import { useHealthCheck, getHealthCheckQueryKey } from '@workspace/api-client-react';
+import { useAuth, ROLE_LABELS } from '@/lib/auth';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
   const { data: health } = useHealthCheck({
     query: { refetchInterval: 30000, queryKey: getHealthCheckQueryKey() },
   });
@@ -82,10 +85,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="h-4 w-px bg-border"></div>
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
-                OP
+                {user?.initials ?? '--'}
               </span>
-              <span className="font-semibold">Operator_01</span>
+              <div className="hidden sm:flex flex-col leading-tight">
+                <span className="font-semibold">{user?.name ?? 'Unknown'}</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  {user ? ROLE_LABELS[user.role] : ''}
+                </span>
+              </div>
             </div>
+            <button
+              onClick={logout}
+              title="Sign out"
+              className="text-muted-foreground hover:text-destructive transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </header>
         <div className="flex-1 overflow-auto bg-background p-6">

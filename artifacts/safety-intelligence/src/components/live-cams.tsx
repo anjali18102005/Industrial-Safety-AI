@@ -34,7 +34,7 @@ function CameraTile({
 
   return (
     <div
-      className={`relative aspect-video rounded-md overflow-hidden bg-black ${riskGlow[riskLevel] ?? riskGlow.low}`}
+      className={`relative w-full h-full min-h-[140px] rounded-md overflow-hidden bg-black ${riskGlow[riskLevel] ?? riskGlow.low}`}
     >
       {src ? (
         <video
@@ -86,7 +86,7 @@ export function LiveCams() {
   }, []);
 
   return (
-    <div className="bg-card border rounded-lg shadow-sm flex flex-col overflow-hidden">
+    <div className="bg-card border rounded-lg shadow-sm flex flex-col overflow-hidden h-full min-h-[600px]">
       <div className="p-4 border-b flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <Video className="w-4 h-4 text-primary" />
@@ -97,7 +97,7 @@ export function LiveCams() {
         <span className="text-[10px] font-mono text-muted-foreground">{zones?.length ?? 0} FEEDS</span>
       </div>
 
-      <div className="p-3">
+      <div className="p-3 flex-1 flex flex-col min-h-0">
         {isLoading && (
           <div className="text-xs font-mono text-muted-foreground p-4 text-center animate-pulse">
             Connecting to feeds...
@@ -110,7 +110,7 @@ export function LiveCams() {
           </div>
         )}
         {zones && zones.length > 0 && (
-          <div className="grid grid-cols-3 grid-rows-2 gap-3">
+          <div className="grid grid-cols-2 grid-rows-3 gap-3 flex-1 min-h-0">
             {zones.slice(0, 6).map((zone) => (
               <CameraTile key={zone.id} zoneId={zone.id} name={zone.name} riskLevel={zone.riskLevel} now={now} />
             ))}

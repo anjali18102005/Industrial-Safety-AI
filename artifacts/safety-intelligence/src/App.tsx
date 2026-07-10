@@ -10,10 +10,12 @@ import HazardDetail from '@/pages/hazard-detail';
 import Zones from '@/pages/zones';
 import Sensors from '@/pages/sensors';
 import Activity from '@/pages/activity';
+import Login from '@/pages/login';
+import { AuthProvider, useAuth } from '@/lib/auth';
 
 const queryClient = new QueryClient();
 
-function Router() {
+function AuthenticatedApp() {
   return (
     <Layout>
       <Switch>
@@ -29,12 +31,20 @@ function Router() {
   );
 }
 
+function Router() {
+  const { user } = useAuth();
+  if (!user) return <Login />;
+  return <AuthenticatedApp />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
