@@ -18,23 +18,26 @@ const footageByZone: Record<string, string> = {
   'zone-e': '/cams/zone-e.mp4',
 };
 
+// Extra fixed camera used to fill any empty slots in the grid once all zone
+// feeds are shown (e.g. a perimeter/gate view rather than a per-zone one).
+const EXTRA_CAMERA = { id: 'perimeter', name: 'Site Perimeter', src: '/cams/perimeter.mp4', riskLevel: 'low' as const };
+
 function CameraTile({
-  zoneId,
   name,
   riskLevel,
+  src,
   now,
 }: {
-  zoneId: string;
   name: string;
   riskLevel: string;
+  src?: string;
   now: Date;
 }) {
   const timestamp = now.toLocaleTimeString('en-GB', { hour12: false });
-  const src = footageByZone[zoneId];
 
   return (
     <div
-      className={`relative w-full h-full min-h-[140px] rounded-md overflow-hidden bg-black ${riskGlow[riskLevel] ?? riskGlow.low}`}
+      className={`relative w-full aspect-video rounded-md overflow-hidden bg-black ${riskGlow[riskLevel] ?? riskGlow.low}`}
     >
       {src ? (
         <video
@@ -76,6 +79,8 @@ function CameraTile({
   );
 }
 
+const GRID_SLOTS = 6;
+
 export function LiveCams() {
   const { data: zones, isLoading, error } = useListZones();
   const [now, setNow] = useState(() => new Date());
@@ -85,8 +90,21 @@ export function LiveCams() {
     return () => clearInterval(id);
   }, []);
 
+  const zoneCams = (zones ?? []).slice(0, GRID_SLOTS).map((zone) => ({
+    id: zone.id,
+    name: zone.name,
+    riskLevel: zone.riskLevel,
+    src: footageByZone[zone.id],
+  }));
+  // Fill any remaining slots with the fixed perimeter camera rather than
+  // stretching the zone feeds to an unnaturally large size.
+  const cams = [...zoneCams];
+  while (cams.length < GRID_SLOTS && zoneCams.length > 0) {
+    cams.push({ ...EXTRA_CAMERA });
+  }
+
   return (
-    <div className="bg-card border rounded-lg shadow-sm flex flex-col overflow-hidden h-full min-h-[600px]">
+    <div className="bg-card border rounded-lg shadow-sm flex flex-col overflow-hidden">
       <div className="p-4 border-b flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <Video className="w-4 h-4 text-primary" />
@@ -94,10 +112,10 @@ export function LiveCams() {
             Live Cams
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-muted-foreground">{zones?.length ?? 0} FEEDS</span>
+        <span className="text-[10px] font-mono text-muted-foreground">{cams.length} FEEDS</span>
       </div>
 
-      <div className="p-3 flex-1 flex flex-col min-h-0">
+      <div className="p-3">
         {isLoading && (
           <div className="text-xs font-mono text-muted-foreground p-4 text-center animate-pulse">
             Connecting to feeds...
@@ -109,10 +127,10 @@ export function LiveCams() {
             Feed unavailable
           </div>
         )}
-        {zones && zones.length > 0 && (
-          <div className="grid grid-cols-2 grid-rows-3 gap-3 flex-1 min-h-0">
-            {zones.slice(0, 6).map((zone) => (
-              <CameraTile key={zone.id} zoneId={zone.id} name={zone.name} riskLevel={zone.riskLevel} now={now} />
+        {cams.length > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            {cams.map((cam, i) => (
+              <CameraTile key={`${cam.id}-${i}`} name={cam.name} riskLevel={cam.riskLevel} src={cam.src} now={now} />
             ))}
           </div>
         )}
