@@ -176,6 +176,9 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
+      '@workspace/ml-models':
+        specifier: workspace:*
+        version: link:../../lib/ml-models
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -638,11 +641,20 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
 
+  lib/ml-models:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.4
+
   scripts:
     dependencies:
       '@workspace/db':
         specifier: workspace:*
         version: link:../lib/db
+      '@workspace/ml-models':
+        specifier: workspace:*
+        version: link:../lib/ml-models
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

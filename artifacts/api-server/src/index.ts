@@ -1,5 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startHazardAiEngine } from "./lib/hazardAI";
+import { startEngineSimulation } from "./lib/engineSim";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +24,6 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  startHazardAiEngine();
+  startEngineSimulation();
 });

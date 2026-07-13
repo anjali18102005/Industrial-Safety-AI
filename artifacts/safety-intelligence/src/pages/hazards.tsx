@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useListHazards } from '@workspace/api-client-react';
-import { RiskBadge, StatusBadge } from '@/components/ui/badge';
+import { useListHazards, getListHazardsQueryKey } from '@workspace/api-client-react';
+import { RiskBadge, StatusBadge, AiDetectedBadge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import { Filter, Search, Clock, Users, ShieldAlert, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
@@ -9,9 +9,12 @@ export default function Hazards() {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterRisk, setFilterRisk] = useState<string>('');
 
-  const { data: hazards, isLoading } = useListHazards({
+  const params = {
     status: filterStatus ? (filterStatus as any) : undefined,
     riskLevel: filterRisk ? (filterRisk as any) : undefined
+  };
+  const { data: hazards, isLoading } = useListHazards(params, {
+    query: { refetchInterval: 10000, queryKey: getListHazardsQueryKey(params) },
   });
 
   return (
@@ -78,6 +81,7 @@ export default function Hazards() {
                       <div className="font-semibold text-foreground">{hazard.title}</div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
                         <span className="font-mono">{hazard.scenarioType}</span>
+                        {hazard.scenarioType === 'ai_detected_failure_risk' && <AiDetectedBadge />}
                         {hazard.workersNearby > 0 && (
                           <span className="flex items-center gap-1 text-orange-600 bg-orange-100 dark:bg-orange-900/30 px-1.5 rounded-sm">
                             <Users className="w-3 h-3" /> {hazard.workersNearby} nearby

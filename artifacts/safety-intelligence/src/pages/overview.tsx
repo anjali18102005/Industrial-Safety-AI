@@ -1,12 +1,15 @@
 import React from 'react';
-import { useGetDashboardSummary } from '@workspace/api-client-react';
-import { AlertTriangle, Map, Radio, Users, ChevronRight, CheckCircle2, Gauge } from 'lucide-react';
+import { useGetDashboardSummary, useGetAiStatus, getGetAiStatusQueryKey, getGetDashboardSummaryQueryKey } from '@workspace/api-client-react';
+import { AlertTriangle, Map, Radio, Users, ChevronRight, CheckCircle2, Gauge, Cpu, Target } from 'lucide-react';
 import { Link } from 'wouter';
-import { RiskBadge, StatusBadge } from '@/components/ui/badge';
+import { RiskBadge, StatusBadge, AiDetectedBadge } from '@/components/ui/badge';
 import { LiveCams } from '@/components/live-cams';
 
 export default function Overview() {
-  const { data: summary, isLoading, error } = useGetDashboardSummary();
+  const { data: summary, isLoading, error } = useGetDashboardSummary({
+    query: { refetchInterval: 10000, queryKey: getGetDashboardSummaryQueryKey() },
+  });
+  const { data: aiStatus } = useGetAiStatus({ query: { refetchInterval: 15000, queryKey: getGetAiStatusQueryKey() } });
 
   if (isLoading) return <div className="p-8 font-mono animate-pulse">Initializing System...</div>;
   if (error || !summary) return <div className="p-8 text-destructive">Failed to load system state.</div>;
@@ -44,6 +47,9 @@ export default function Overview() {
 
           {/* AI Risk Score */}
           <RiskScoreCard summary={summary} />
+
+          {/* AI Model Transparency Panel */}
+          {aiStatus && <AiModelPanel aiStatus={aiStatus} />}
 
           {/* Risk Distribution */}
           <div className="grid grid-cols-1 gap-6">
@@ -183,6 +189,46 @@ function RiskScoreCard({ summary }: { summary: { criticalCount: number; highCoun
         <p className="text-xs text-muted-foreground mt-1">
           Blends live hazard severity across all zones with the model's average confidence ({confidence.toFixed(1)}%) in its assessments.
         </p>
+      </div>
+    </div>
+  );
+}
+
+function AiModelPanel({ aiStatus }: { aiStatus: { models: { name: string; kind: string; version: string; metrics: { accuracy?: number; auc?: number; rmse?: number; mae?: number } }[]; lastScanAt: string; zonesScored: number } }) {
+  return (
+    <div className="bg-card border rounded-lg shadow-sm p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-primary" /> AI Models Live
+        </h3>
+        <span className="text-[11px] font-mono text-muted-foreground">
+          Last scan: {new Date(aiStatus.lastScanAt).toLocaleTimeString()} · {aiStatus.zonesScored} zones
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {aiStatus.models.map((model) => (
+          <div key={model.name} className="border rounded-md p-4 bg-muted/10">
+            <div className="flex items-center gap-2 mb-2">
+              {model.kind === 'classifier' ? <AiDetectedBadge /> : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 text-[10px] uppercase font-bold tracking-wider"><Target className="w-3 h-3" /> Regressor</span>}
+              <span className="text-[10px] font-mono text-muted-foreground uppercase">{model.version}</span>
+            </div>
+            <p className="text-sm font-semibold mb-2">{model.name}</p>
+            <div className="flex gap-4 text-xs font-mono">
+              {model.metrics.accuracy !== undefined && (
+                <span>Acc <b className="text-foreground">{(model.metrics.accuracy * 100).toFixed(0)}%</b></span>
+              )}
+              {model.metrics.auc !== undefined && (
+                <span>AUC <b className="text-foreground">{model.metrics.auc.toFixed(2)}</b></span>
+              )}
+              {model.metrics.rmse !== undefined && (
+                <span>RMSE <b className="text-foreground">{model.metrics.rmse.toFixed(1)}</b></span>
+              )}
+              {model.metrics.mae !== undefined && (
+                <span>MAE <b className="text-foreground">{model.metrics.mae.toFixed(1)}</b></span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

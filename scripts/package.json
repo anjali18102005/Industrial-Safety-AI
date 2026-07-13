@@ -6,10 +6,12 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed:safety": "tsx ./src/seedSafety.ts",
+    "seed:engines": "tsx ./src/seedEngines.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*"
+    "@workspace/db": "workspace:*",
+    "@workspace/ml-models": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

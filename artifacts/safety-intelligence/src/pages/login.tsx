@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, ShieldCheck, HardHat, UserCog, Lock } from 'lucide-react';
 import { useAuth, DEMO_CREDENTIALS, ROLE_LABELS, type Role } from '@/lib/auth';
+import industrialBg from '@/assets/login-industrial-bg.jpg';
 
 const roleMeta: Record<Role, { icon: React.ComponentType<{ className?: string }>; blurb: string }> = {
   operator: { icon: HardHat, blurb: 'Monitor live feeds and acknowledge hazards on the floor.' },
@@ -40,7 +41,14 @@ export default function Login() {
 
       <div className="relative w-full max-w-4xl grid md:grid-cols-5 rounded-xl border shadow-xl overflow-hidden bg-card">
         {/* Left brand panel */}
-        <div className="md:col-span-2 bg-sidebar text-sidebar-foreground p-8 flex flex-col justify-between">
+        <div
+          className="md:col-span-2 relative text-sidebar-foreground p-8 flex flex-col justify-between overflow-hidden"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(10,14,20,0.35), rgba(10,14,20,0.55)), url(${industrialBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
           <div>
             <div className="flex items-center gap-3 mb-8">
               <Activity className="w-7 h-7 text-sidebar-primary" />

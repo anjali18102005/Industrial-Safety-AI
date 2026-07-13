@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useListSensors, useGetSensorHistory } from '@workspace/api-client-react';
-import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Thermometer, Wind, Zap, Gauge, Camera, Filter } from 'lucide-react';
+import { Activity, Thermometer, Wind, Zap, Gauge, Camera, Filter, Cpu } from 'lucide-react';
 import { format } from 'date-fns';
 
 const iconMap: Record<string, any> = {
@@ -11,7 +11,8 @@ const iconMap: Record<string, any> = {
   vibration: Activity,
   pressure: Gauge,
   proximity: Zap,
-  camera: Camera
+  camera: Camera,
+  control: Cpu
 };
 
 export default function Sensors() {
@@ -41,6 +42,7 @@ export default function Sensors() {
           <option value="pressure">Pressure</option>
           <option value="proximity">Proximity</option>
           <option value="camera">Camera</option>
+          <option value="control">Control (AI)</option>
         </select>
       </div>
 
@@ -169,10 +171,26 @@ function SensorDetail({ id, sensors }: { id: string, sensors: any[] }) {
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={history?.slice().reverse()}>
-                <YAxis domain={['auto', 'auto']} width={40} tick={{ fontSize: 10, fontFamily: 'monospace' }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="timestamp"
+                  tickFormatter={(ts) => format(new Date(ts), 'HH:mm:ss')}
+                  tick={{ fontSize: 10, fontFamily: 'monospace' }}
+                  stroke="hsl(var(--border))"
+                  tickLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  minTickGap={30}
+                />
+                <YAxis
+                  domain={['auto', 'auto']}
+                  width={40}
+                  tick={{ fontSize: 10, fontFamily: 'monospace' }}
+                  stroke="hsl(var(--border))"
+                  tickLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '4px', fontSize: '12px', fontFamily: 'monospace' }}
-                  labelFormatter={(lbl) => format(new Date(history![history!.length - 1 - (lbl as number)].timestamp), 'HH:mm:ss')}
+                  labelFormatter={(lbl) => format(new Date(lbl as string), 'HH:mm:ss')}
                 />
                 <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>

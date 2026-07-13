@@ -31,6 +31,27 @@ async function main() {
     { id: "sns-cam-d1", name: "CCTV Camera D1", sensorType: "camera", zoneId: "zone-d", unit: "score" },
     { id: "sns-temp-e1", name: "Temperature Probe E1", sensorType: "temperature", zoneId: "zone-e", unit: "°C" },
     { id: "sns-vib-e2", name: "Vibration Sensor E2", sensorType: "vibration", zoneId: "zone-e", unit: "mm/s" },
+    // Edge-controller PID output confidence -- fed into the live AI hazard
+    // classifier alongside temperature/pressure/vibration (see
+    // artifacts/api-server/src/lib/hazardAI.ts).
+    { id: "sns-ctrl-a3", name: "Edge Controller A3", sensorType: "control", zoneId: "zone-a", unit: "score" },
+    { id: "sns-ctrl-b3", name: "Edge Controller B3", sensorType: "control", zoneId: "zone-b", unit: "score" },
+    { id: "sns-ctrl-c3", name: "Edge Controller C3", sensorType: "control", zoneId: "zone-c", unit: "score" },
+    { id: "sns-ctrl-d3", name: "Edge Controller D3", sensorType: "control", zoneId: "zone-d", unit: "score" },
+    { id: "sns-ctrl-e3", name: "Edge Controller E3", sensorType: "control", zoneId: "zone-e", unit: "score" },
+    // The live AI classifier needs temperature + pressure + vibration +
+    // control readings for every zone; fill in whichever of the four this
+    // zone didn't already have from its narrative hazard scenario.
+    { id: "sns-temp-a4", name: "Temperature Probe A4", sensorType: "temperature", zoneId: "zone-a", unit: "°C" },
+    { id: "sns-vib-a5", name: "Vibration Sensor A5", sensorType: "vibration", zoneId: "zone-a", unit: "mm/s" },
+    { id: "sns-temp-b4", name: "Temperature Probe B4", sensorType: "temperature", zoneId: "zone-b", unit: "°C" },
+    { id: "sns-press-b5", name: "Pressure Transmitter B5", sensorType: "pressure", zoneId: "zone-b", unit: "bar" },
+    { id: "sns-vib-b6", name: "Vibration Sensor B6", sensorType: "vibration", zoneId: "zone-b", unit: "mm/s" },
+    { id: "sns-press-c3", name: "Pressure Transmitter C3", sensorType: "pressure", zoneId: "zone-c", unit: "bar" },
+    { id: "sns-temp-d2", name: "Temperature Probe D2", sensorType: "temperature", zoneId: "zone-d", unit: "°C" },
+    { id: "sns-press-d3", name: "Pressure Transmitter D3", sensorType: "pressure", zoneId: "zone-d", unit: "bar" },
+    { id: "sns-vib-d4", name: "Vibration Sensor D4", sensorType: "vibration", zoneId: "zone-d", unit: "mm/s" },
+    { id: "sns-press-e2", name: "Pressure Transmitter E2", sensorType: "pressure", zoneId: "zone-e", unit: "bar" },
   ];
   await db.insert(sensorsTable).values(sensors).onConflictDoNothing();
 
@@ -56,6 +77,23 @@ async function main() {
     { sensorId: "sns-cam-d1", baseline: 0.1, peak: 0.15, finalStatus: "normal" },
     { sensorId: "sns-temp-e1", baseline: 22, peak: 24, finalStatus: "normal" },
     { sensorId: "sns-vib-e2", baseline: 1.8, peak: 2.0, finalStatus: "normal" },
+    // Control confidence dips as the associated zone's hazard develops --
+    // this is the feature the live AI classifier weighs most heavily.
+    { sensorId: "sns-ctrl-a3", baseline: 0.95, peak: 0.4, finalStatus: "critical" },
+    { sensorId: "sns-ctrl-b3", baseline: 0.92, peak: 0.7, finalStatus: "warning" },
+    { sensorId: "sns-ctrl-c3", baseline: 0.93, peak: 0.55, finalStatus: "warning" },
+    { sensorId: "sns-ctrl-d3", baseline: 0.9, peak: 0.85, finalStatus: "normal" },
+    { sensorId: "sns-ctrl-e3", baseline: 0.94, peak: 0.9, finalStatus: "normal" },
+    { sensorId: "sns-temp-a4", baseline: 38, peak: 74, finalStatus: "warning" },
+    { sensorId: "sns-vib-a5", baseline: 2.0, peak: 6.5, finalStatus: "warning" },
+    { sensorId: "sns-temp-b4", baseline: 24, peak: 30, finalStatus: "normal" },
+    { sensorId: "sns-press-b5", baseline: 6.5, peak: 7.8, finalStatus: "normal" },
+    { sensorId: "sns-vib-b6", baseline: 1.7, peak: 2.4, finalStatus: "normal" },
+    { sensorId: "sns-press-c3", baseline: 7.0, peak: 8.6, finalStatus: "warning" },
+    { sensorId: "sns-temp-d2", baseline: 25, peak: 27, finalStatus: "normal" },
+    { sensorId: "sns-press-d3", baseline: 6.2, peak: 6.6, finalStatus: "normal" },
+    { sensorId: "sns-vib-d4", baseline: 1.6, peak: 1.9, finalStatus: "normal" },
+    { sensorId: "sns-press-e2", baseline: 6.0, peak: 6.3, finalStatus: "normal" },
   ];
 
   const readingRows: (typeof sensorReadingsTable.$inferInsert)[] = [];

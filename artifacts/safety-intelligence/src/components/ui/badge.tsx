@@ -1,6 +1,6 @@
 import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, Cpu } from 'lucide-react';
 
 const badgeVariants = cva(
   "inline-flex items-center rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -38,6 +38,14 @@ export function RiskBadge({ level, className }: { level: string, className?: str
     <Badge variant={v as any} className={`uppercase tracking-wider font-mono text-[10px] ${className}`}>
       {level}
     </Badge>
+  );
+}
+
+export function AiDetectedBadge({ className }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-[10px] uppercase font-bold tracking-wider ${className ?? ''}`}>
+      <Cpu className="w-3 h-3" /> AI Detected
+    </span>
   );
 }
 

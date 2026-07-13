@@ -9,6 +9,7 @@ import Hazards from '@/pages/hazards';
 import HazardDetail from '@/pages/hazard-detail';
 import Zones from '@/pages/zones';
 import Sensors from '@/pages/sensors';
+import Engines from '@/pages/engines';
 import Activity from '@/pages/activity';
 import Login from '@/pages/login';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -24,6 +25,7 @@ function AuthenticatedApp() {
         <Route path="/hazards/:id" component={HazardDetail} />
         <Route path="/zones" component={Zones} />
         <Route path="/sensors" component={Sensors} />
+        <Route path="/engines" component={Engines} />
         <Route path="/activity" component={Activity} />
         <Route component={NotFound} />
       </Switch>

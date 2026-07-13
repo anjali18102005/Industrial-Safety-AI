@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
-import { useGetHazard, useUpdateHazardStatus, useGetHazardTimeline } from '@workspace/api-client-react';
+import { useGetHazard, useUpdateHazardStatus, useGetHazardTimeline, getGetHazardQueryKey } from '@workspace/api-client-react';
 import { useLocation, useParams } from 'wouter';
-import { RiskBadge, StatusBadge, Badge } from '@/components/ui/badge';
+import { RiskBadge, StatusBadge, Badge, AiDetectedBadge } from '@/components/ui/badge';
 import { ArrowLeft, BrainCircuit, Activity, Clock, ShieldCheck, AlertTriangle, MessageSquareWarning } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +14,9 @@ export default function HazardDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: hazard, isLoading } = useGetHazard(id);
+  const { data: hazard, isLoading } = useGetHazard(id, {
+    query: { refetchInterval: 10000, queryKey: getGetHazardQueryKey(id) },
+  });
   const { data: timeline } = useGetHazardTimeline(id);
   const updateStatus = useUpdateHazardStatus();
   
@@ -26,6 +28,7 @@ export default function HazardDetail() {
         queryClient.invalidateQueries({ queryKey: ['/api/hazards'] });
         queryClient.invalidateQueries({ queryKey: [`/api/hazards/${id}`] });
         queryClient.invalidateQueries({ queryKey: [`/api/hazards/${id}/timeline`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/summary'] });
       },
       onError: () => {
         toast({ title: 'Update Failed', variant: 'destructive' });
@@ -45,6 +48,7 @@ export default function HazardDetail() {
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{hazard.scenarioType}</span>
+            {hazard.scenarioType === 'ai_detected_failure_risk' && <AiDetectedBadge />}
             <span className="text-muted-foreground/30">•</span>
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{hazard.id}</span>
           </div>
