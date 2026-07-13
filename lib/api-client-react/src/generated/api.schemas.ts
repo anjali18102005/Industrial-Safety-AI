@@ -43,6 +43,7 @@ export const SensorType = {
   pressure: 'pressure',
   proximity: 'proximity',
   camera: 'camera',
+  control: 'control',
 } as const;
 
 export type SensorStatus = typeof SensorStatus[keyof typeof SensorStatus];
@@ -162,6 +163,7 @@ export const TimelineEventEventType = {
   priority_changed: 'priority_changed',
   recommendation_issued: 'recommendation_issued',
   status_changed: 'status_changed',
+  ai_detected: 'ai_detected',
 } as const;
 
 export interface TimelineEvent {
@@ -172,6 +174,73 @@ export interface TimelineEvent {
   description: string;
   timestamp: string;
 }
+
+/**
+ * Offline evaluation metrics captured at training time (see /ml at the repo root)
+ */
+export interface ModelMetrics {
+  accuracy?: number;
+  auc?: number;
+  f1?: number;
+  rmse?: number;
+  mae?: number;
+  testSize?: number;
+  testUnits?: number;
+}
+
+export type AiModelInfoKind = typeof AiModelInfoKind[keyof typeof AiModelInfoKind];
+
+
+export const AiModelInfoKind = {
+  classifier: 'classifier',
+  regressor: 'regressor',
+} as const;
+
+export interface AiModelInfo {
+  name: string;
+  kind: AiModelInfoKind;
+  version: string;
+  trainedOn: string;
+  features: string[];
+  metrics: ModelMetrics;
+}
+
+export interface AiStatus {
+  models: AiModelInfo[];
+  lastScanAt: string;
+  zonesScored: number;
+}
+
+export type EngineStatus = typeof EngineStatus[keyof typeof EngineStatus];
+
+
+export const EngineStatus = {
+  nominal: 'nominal',
+  watch: 'watch',
+  critical: 'critical',
+  retired: 'retired',
+} as const;
+
+export interface Engine {
+  id: string;
+  name: string;
+  datasetUnit: number;
+  currentCycle: number;
+  totalCycles: number;
+  predictedRul: number;
+  status: EngineStatus;
+  updatedAt: string;
+}
+
+export interface EngineHistoryPoint {
+  cycle: number;
+  predictedRul: number;
+  timestamp: string;
+}
+
+export type EngineDetail = Engine & {
+  history: EngineHistoryPoint[];
+};
 
 export type ListSensorsParams = {
 zoneId?: string;

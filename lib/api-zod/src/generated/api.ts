@@ -66,13 +66,13 @@ export const ListZonesResponse = zod.array(ListZonesResponseItem)
  */
 export const ListSensorsQueryParams = zod.object({
   "zoneId": zod.coerce.string().optional(),
-  "sensorType": zod.enum(['gas', 'vibration', 'temperature', 'pressure', 'proximity', 'camera']).optional()
+  "sensorType": zod.enum(['gas', 'vibration', 'temperature', 'pressure', 'proximity', 'camera', 'control']).optional()
 })
 
 export const ListSensorsResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "sensorType": zod.enum(['gas', 'vibration', 'temperature', 'pressure', 'proximity', 'camera']),
+  "sensorType": zod.enum(['gas', 'vibration', 'temperature', 'pressure', 'proximity', 'camera', 'control']),
   "zoneId": zod.string(),
   "zoneName": zod.string(),
   "unit": zod.string(),
@@ -226,7 +226,7 @@ export const GetHazardTimelineResponseItem = zod.object({
   "id": zod.string(),
   "hazardId": zod.string(),
   "hazardTitle": zod.string(),
-  "eventType": zod.enum(['sensor_anomaly', 'scenario_detected', 'risk_escalated', 'priority_changed', 'recommendation_issued', 'status_changed']),
+  "eventType": zod.enum(['sensor_anomaly', 'scenario_detected', 'risk_escalated', 'priority_changed', 'recommendation_issued', 'status_changed', 'ai_detected']),
   "description": zod.string(),
   "timestamp": zod.coerce.date()
 })
@@ -244,10 +244,76 @@ export const ListActivityResponseItem = zod.object({
   "id": zod.string(),
   "hazardId": zod.string(),
   "hazardTitle": zod.string(),
-  "eventType": zod.enum(['sensor_anomaly', 'scenario_detected', 'risk_escalated', 'priority_changed', 'recommendation_issued', 'status_changed']),
+  "eventType": zod.enum(['sensor_anomaly', 'scenario_detected', 'risk_escalated', 'priority_changed', 'recommendation_issued', 'status_changed', 'ai_detected']),
   "description": zod.string(),
   "timestamp": zod.coerce.date()
 })
 export const ListActivityResponse = zod.array(ListActivityResponseItem)
+
+
+/**
+ * @summary Live status and offline evaluation metrics for the deployed AI models
+ */
+export const GetAiStatusResponse = zod.object({
+  "models": zod.array(zod.object({
+  "name": zod.string(),
+  "kind": zod.enum(['classifier', 'regressor']),
+  "version": zod.string(),
+  "trainedOn": zod.string(),
+  "features": zod.array(zod.string()),
+  "metrics": zod.object({
+  "accuracy": zod.number().optional(),
+  "auc": zod.number().optional(),
+  "f1": zod.number().optional(),
+  "rmse": zod.number().optional(),
+  "mae": zod.number().optional(),
+  "testSize": zod.number().optional(),
+  "testUnits": zod.number().optional()
+}).describe('Offline evaluation metrics captured at training time (see \/ml at the repo root)')
+})),
+  "lastScanAt": zod.coerce.date(),
+  "zonesScored": zod.number()
+})
+
+
+/**
+ * @summary List the demo engine fleet with live predicted Remaining Useful Life
+ */
+export const ListEnginesResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "datasetUnit": zod.number(),
+  "currentCycle": zod.number(),
+  "totalCycles": zod.number(),
+  "predictedRul": zod.number(),
+  "status": zod.enum(['nominal', 'watch', 'critical', 'retired']),
+  "updatedAt": zod.coerce.date()
+})
+export const ListEnginesResponse = zod.array(ListEnginesResponseItem)
+
+
+/**
+ * @summary Get a single engine's live RUL prediction and recent history
+ */
+export const GetEngineParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetEngineResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "datasetUnit": zod.number(),
+  "currentCycle": zod.number(),
+  "totalCycles": zod.number(),
+  "predictedRul": zod.number(),
+  "status": zod.enum(['nominal', 'watch', 'critical', 'retired']),
+  "updatedAt": zod.coerce.date()
+}).and(zod.object({
+  "history": zod.array(zod.object({
+  "cycle": zod.number(),
+  "predictedRul": zod.number(),
+  "timestamp": zod.coerce.date()
+}))
+}))
 
 

@@ -16,4 +16,5 @@ export const SensorType = {
   pressure: 'pressure',
   proximity: 'proximity',
   camera: 'camera',
+  control: 'control',
 } as const;

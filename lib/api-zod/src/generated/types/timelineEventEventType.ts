@@ -16,4 +16,5 @@ export const TimelineEventEventType = {
   priority_changed: 'priority_changed',
   recommendation_issued: 'recommendation_issued',
   status_changed: 'status_changed',
+  ai_detected: 'ai_detected',
 } as const;

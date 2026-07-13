@@ -6,8 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './aiModelInfo';
+export * from './aiModelInfoKind';
+export * from './aiStatus';
 export * from './contributingFactor';
 export * from './dashboardSummary';
+export * from './engine';
+export * from './engineDetail';
+export * from './engineHistoryPoint';
+export * from './engineStatus';
 export * from './errorResponse';
 export * from './explainabilityTrace';
 export * from './hazardDetail';
@@ -18,6 +25,7 @@ export * from './healthStatus';
 export * from './listActivityParams';
 export * from './listHazardsParams';
 export * from './listSensorsParams';
+export * from './modelMetrics';
 export * from './recommendedAction';
 export * from './recommendedActionPriority';
 export * from './riskLevel';

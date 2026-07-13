@@ -20,6 +20,10 @@ tags:
     description: Hazard scenarios detected by the AI
   - name: activity
     description: Safety timeline and digital safety log
+  - name: engines
+    description: Predictive maintenance — Remaining Useful Life (RUL) engine fleet
+  - name: ai
+    description: Live AI model status and metrics
 paths:
   /healthz:
     get:
@@ -246,6 +250,59 @@ paths:
                 items:
                   $ref: "#/components/schemas/TimelineEvent"
 
+  /ai/status:
+    get:
+      operationId: getAiStatus
+      tags: [ai]
+      summary: Live status and offline evaluation metrics for the deployed AI models
+      responses:
+        "200":
+          description: AI model status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiStatus"
+
+  /engines:
+    get:
+      operationId: listEngines
+      tags: [engines]
+      summary: List the demo engine fleet with live predicted Remaining Useful Life
+      responses:
+        "200":
+          description: List of engines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Engine"
+
+  /engines/{id}:
+    get:
+      operationId: getEngine
+      tags: [engines]
+      summary: Get a single engine's live RUL prediction and recent history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Engine detail with recent RUL history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngineDetail"
+        "404":
+          description: Engine not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -273,7 +330,7 @@ components:
 
     SensorType:
       type: string
-      enum: [gas, vibration, temperature, pressure, proximity, camera]
+      enum: [gas, vibration, temperature, pressure, proximity, camera, control]
 
     SensorStatus:
       type: string
@@ -500,9 +557,119 @@ components:
           type: string
         eventType:
           type: string
-          enum: [sensor_anomaly, scenario_detected, risk_escalated, priority_changed, recommendation_issued, status_changed]
+          enum: [sensor_anomaly, scenario_detected, risk_escalated, priority_changed, recommendation_issued, status_changed, ai_detected]
         description:
           type: string
         timestamp:
           type: string
           format: date-time
+
+    ModelMetrics:
+      type: object
+      description: Offline evaluation metrics captured at training time (see /ml at the repo root)
+      properties:
+        accuracy:
+          type: number
+        auc:
+          type: number
+        f1:
+          type: number
+        rmse:
+          type: number
+        mae:
+          type: number
+        testSize:
+          type: integer
+        testUnits:
+          type: integer
+
+    AiModelInfo:
+      type: object
+      required: [name, kind, version, trainedOn, features, metrics]
+      properties:
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [classifier, regressor]
+        version:
+          type: string
+        trainedOn:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+        metrics:
+          $ref: "#/components/schemas/ModelMetrics"
+
+    AiStatus:
+      type: object
+      required: [models, lastScanAt, zonesScored]
+      properties:
+        models:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiModelInfo"
+        lastScanAt:
+          type: string
+          format: date-time
+        zonesScored:
+          type: integer
+
+    EngineStatus:
+      type: string
+      enum: [nominal, watch, critical, retired]
+
+    Engine:
+      type: object
+      required:
+        - id
+        - name
+        - datasetUnit
+        - currentCycle
+        - totalCycles
+        - predictedRul
+        - status
+        - updatedAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        datasetUnit:
+          type: integer
+        currentCycle:
+          type: integer
+        totalCycles:
+          type: integer
+        predictedRul:
+          type: number
+        status:
+          $ref: "#/components/schemas/EngineStatus"
+        updatedAt:
+          type: string
+          format: date-time
+
+    EngineHistoryPoint:
+      type: object
+      required: [cycle, predictedRul, timestamp]
+      properties:
+        cycle:
+          type: integer
+        predictedRul:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    EngineDetail:
+      allOf:
+        - $ref: "#/components/schemas/Engine"
+        - type: object
+          required: [history]
+          properties:
+            history:
+              type: array
+              items:
+                $ref: "#/components/schemas/EngineHistoryPoint"
