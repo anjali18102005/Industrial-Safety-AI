@@ -151,31 +151,12 @@ Dashboard + Safety Timeline + Digital Safety Log
 
 ---
 
-# 📂 Project Structure
-
-```
-Industrial-Safety-Intelligence/
-│
-├── app/
-├── dashboard/
-├── models/
-├── utils/
-├── assets/
-├── sample_data/
-├── architecture/
-├── requirements.txt
-├── README.md
-└── LICENSE
-```
-
----
-
 # ⚙ Installation
 
 Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/Industrial-Safety-Intelligence.git
+git clone https://github.com/anjali18102005/Industrial-Safety-Intelligence.git
 ```
 
 Go into the project
