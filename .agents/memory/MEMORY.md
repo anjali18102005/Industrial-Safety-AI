@@ -1,3 +1,0 @@
-- [Empty-string filter params vs Zod enums](openapi-empty-filter-enum.md) — a `useState('')` default for an optional enum query filter fails Zod validation (400); only send the param when truthy.
-- [ML model weights in Node](ml-model-weights-in-node.md) — hand-port sklearn MLP forward passes to TS instead of ONNX runtime when the build externalizes native deps; export weights as `.ts` not `.json`.
-- [Live per-zone AI classifier sensor coverage](live-ai-classifier-sensor-coverage.md) — a live scan loop silently scores 0 zones if any zone lacks one of the model's required sensor types; audit coverage explicitly.
